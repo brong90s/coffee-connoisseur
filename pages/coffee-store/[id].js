@@ -1,3 +1,5 @@
+import { useContext, useEffect, useState } from "react";
+import { StoreContext } from "../../store/store-context";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -5,6 +7,7 @@ import { useRouter } from "next/router";
 import styles from "../../styles/coffee-store.module.css";
 import cls from "classnames";
 import { fetchCoffeeStore } from "../../lib/coffee-store";
+import { isEmpty } from "../../utils";
 
 export async function getStaticPaths() {
   const coffeeStore = await fetchCoffeeStore();
@@ -24,26 +27,41 @@ export async function getStaticPaths() {
 
 export async function getStaticProps(staticProps) {
   const params = staticProps.params;
-  console.log("params", params);
   const coffeeStore = await fetchCoffeeStore();
-
+  const findCoffeeStoreById = coffeeStore.find((coffeeStore) => {
+    return coffeeStore.id.toString() === params.id;
+  });
   return {
     props: {
-      coffeeStore: coffeeStore.find((coffeeStore) => {
-        return coffeeStore.id.toString() === params.id;
-      }),
+      coffeeStore: findCoffeeStoreById ? findCoffeeStoreById : {},
     },
   };
 }
 
-const CoffeeStore = (props) => {
+const CoffeeStore = (initialProps) => {
   const router = useRouter();
 
-  if (router.isFallback) {
-    return <div>Loading...</div>;
-  }
+  const id = router.query.id;
 
-  const { address, name, neighbourhood, imgUrl } = props.coffeeStore;
+  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStore);
+
+  const {
+    state: { coffeeStores },
+  } = useContext(StoreContext);
+
+  useEffect(() => {
+    if (isEmpty(initialProps.coffeeStore)) {
+      if (coffeeStores.length > 0) {
+        const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
+          return coffeeStore.id.toString() === id;
+        });
+        setCoffeeStore(findCoffeeStoreById);
+      }
+    }
+  }, [id, coffeeStores, initialProps.coffeeStore]);
+
+
+  const {  address, name, neighbourhood, imgUrl } = coffeeStore;
 
   const handleUpvoteButton = () => {
     console.log("handle upvote");
