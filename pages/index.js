@@ -29,15 +29,18 @@ export default function Home(props) {
 
   useEffect(() => {
     const setCoffeeStoreByLocation = async () => {
-      console.log(latLong);
       if (latLong) {
         try {
-          const fetchedCoffeeStoreData = await fetchCoffeeStore(latLong, 30);
-          // setCoffeeStores(fetchedCoffeeStoreData);
+          const response = await fetch(
+            `api/getCoffeeStoresByLocation?latLong=${latLong}&limit=20`
+          );
+          const coffeeStores = await response.json();
+          console.log("fetchedCoffeeStores", coffeeStores);
+
           dispatch({
             type: ACTION_TYPES.SET_COFFEE_STORES,
             payload: {
-              coffeeStores: fetchedCoffeeStoreData,
+              coffeeStores: coffeeStores,
             },
           });
         } catch (err) {
@@ -46,7 +49,7 @@ export default function Home(props) {
       }
     };
     setCoffeeStoreByLocation();
-  }, [latLong]);
+  }, [latLong, dispatch]);
 
   const handleOnBannerBtnClick = () => {
     handleTrackLocation();
