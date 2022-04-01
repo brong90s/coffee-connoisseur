@@ -49,19 +49,49 @@ const CoffeeStore = (initialProps) => {
     state: { coffeeStores },
   } = useContext(StoreContext);
 
+  const handleCreateCoffeeStore = async (coffeeStore) => {
+    try {
+      const { id, name, address, voting, imgUrl } = coffeeStore;
+      const response = await fetch("/api/createCoffeeStore", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          name,
+          address: address || "",
+          voting,
+          imgUrl,
+        }),
+      });
+
+      const dbCoffeeStore = response.json();
+      console.log({ dbCoffeeStore });
+    } catch (err) {
+      console.log("Error creating coffee store", err);
+    }
+  };
+
   useEffect(() => {
     if (isEmpty(initialProps.coffeeStore)) {
       if (coffeeStores.length > 0) {
-        const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
+        const coffeeStoreFromContext = coffeeStores.find((coffeeStore) => {
           return coffeeStore.id.toString() === id;
         });
-        setCoffeeStore(findCoffeeStoreById);
+
+        if (coffeeStoreFromContext) {
+          setCoffeeStore(coffeeStoreFromContext);
+          handleCreateCoffeeStore(coffeeStoreFromContext);
+        }
       }
+    } else {
+      // SSR
+      handleCreateCoffeeStore(initialProps.coffeeStore)
     }
   }, [id, coffeeStores, initialProps.coffeeStore]);
 
-
-  const {  address, name, neighbourhood, imgUrl } = coffeeStore;
+  const { address, name, imgUrl } = coffeeStore;
 
   const handleUpvoteButton = () => {
     console.log("handle upvote");
@@ -121,17 +151,6 @@ const CoffeeStore = (initialProps) => {
             />
             <p className={styles.text}>{address}</p>
           </div>
-          {neighbourhood && (
-            <div className={styles.iconWrapper}>
-              <Image
-                src="/static/icons/nearMe.svg"
-                width={24}
-                height={24}
-                alt="neighbourhood"
-              />
-              <p className={styles.text}>{neighbourhood}</p>
-            </div>
-          )}
           <div className={styles.iconWrapper}>
             <Image
               src="/static/icons/star.svg"
