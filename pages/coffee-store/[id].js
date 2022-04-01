@@ -7,7 +7,8 @@ import { useRouter } from "next/router";
 import styles from "../../styles/coffee-store.module.css";
 import cls from "classnames";
 import { fetchCoffeeStore } from "../../lib/coffee-store";
-import { isEmpty } from "../../utils";
+import { fetcher, isEmpty } from "../../utils";
+import useSWR from "swr";
 
 export async function getStaticPaths() {
   const coffeeStore = await fetchCoffeeStore();
@@ -67,7 +68,6 @@ const CoffeeStore = (initialProps) => {
       });
 
       const dbCoffeeStore = response.json();
-      console.log({ dbCoffeeStore });
     } catch (err) {
       console.log("Error creating coffee store", err);
     }
@@ -87,14 +87,49 @@ const CoffeeStore = (initialProps) => {
       }
     } else {
       // SSR
-      handleCreateCoffeeStore(initialProps.coffeeStore)
+      handleCreateCoffeeStore(initialProps.coffeeStore);
     }
   }, [id, coffeeStores, initialProps.coffeeStore]);
 
   const { address, name, imgUrl } = coffeeStore;
 
-  const handleUpvoteButton = () => {
-    console.log("handle upvote");
+  const [votingCount, setVotingCount] = useState(0);
+  const { data, error } = useSWR(`/api/getCoffeeStoreById?id=${id}`, fetcher);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setCoffeeStore(data[0]);
+      setVotingCount(data[0].voting);
+    }
+  }, [data]);
+
+  if (error) {
+    return <div>Something went wrong retrieving data</div>;
+  }
+
+  const handleUpvoteButton = async () => {
+    try {
+      const response = await fetch("/api/favouriteCoffeeStoreById", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+        }),
+      });
+
+      const dbCoffeeStore = response.json();
+
+      if(dbCoffeeStore && dbCoffeeStore.length > 0) {
+        let count = votingCount + 1;
+        setVotingCount(count);
+      }
+    } catch (err) {
+      console.log("Error creating coffee store", err);
+    }
+
+
   };
 
   return (
@@ -158,7 +193,7 @@ const CoffeeStore = (initialProps) => {
               height={24}
               alt="view"
             />
-            <p className={styles.text}>1</p>
+            <p className={styles.text}>{votingCount}</p>
           </div>
 
           <button className={styles.upvoteButton} onClick={handleUpvoteButton}>

@@ -1,4 +1,8 @@
-import { table, getMnifiedRecords } from "../../lib/airtable";
+import {
+  table,
+  getMnifiedRecords,
+  findRecordByFilter,
+} from "../../lib/airtable";
 
 const createCoffeeStore = async (req, res) => {
   if (req.method === "POST") {
@@ -6,16 +10,8 @@ const createCoffeeStore = async (req, res) => {
     try {
       if (id) {
         // find a record
-        const findCoffeeStoreRecords = await table
-          .select({
-            filterByFormula: `id="${id}"`,
-          })
-          .firstPage();
-
-        console.log({ findCoffeeStoreRecords });
-
-        if (findCoffeeStoreRecords.length !== 0) {
-          const records = getMnifiedRecords(findCoffeeStoreRecords);
+        const records = await findRecordByFilter(id);
+        if (records.length !== 0) {
           res.json(records);
         } else {
           if (name) {

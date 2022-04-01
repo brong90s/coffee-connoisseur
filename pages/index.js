@@ -35,7 +35,6 @@ export default function Home(props) {
             `api/getCoffeeStoresByLocation?latLong=${latLong}&limit=20`
           );
           const coffeeStores = await response.json();
-          console.log("fetchedCoffeeStores", coffeeStores);
 
           dispatch({
             type: ACTION_TYPES.SET_COFFEE_STORES,
@@ -44,7 +43,7 @@ export default function Home(props) {
             },
           });
         } catch (err) {
-          console.log(err);
+          console.log('setCoffeeStoreByLocation', err);
         }
       }
     };
